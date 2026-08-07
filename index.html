@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Calculadora de Checksum BIP39</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow"><span class="dot"></span> FERRAMENTA LOCAL • BIP39</div>
+      <h1>Checksum, sem<br><em>caixa-preta.</em></h1>
+      <p class="lead">Complete a frase, veja todas as palavras finais válidas e inspecione padrões perigosos antes que eles virem um problemão.</p>
+    </header>
+
+    <section class="warning" aria-label="Aviso de segurança">
+      <span class="warning-icon">!</span>
+      <div><strong>Nunca insira uma seed que proteja fundos reais.</strong><br>Use esta ferramenta apenas em um dispositivo totalmente offline, sem Wi-Fi, cabo de rede ou Bluetooth. O processamento acontece localmente no navegador.</div>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <label>IDIOMA DA WORDLIST
+          <select id="language"></select>
+        </label>
+        <div class="mode" role="group" aria-label="Tamanho da frase">
+          <button class="mode-btn active" data-size="12">12 palavras</button>
+          <button class="mode-btn" data-size="24">24 palavras</button>
+        </div>
+      </div>
+
+      <div class="entry-head">
+        <div><span id="filled">0</span>/<span id="target">11</span> palavras de entropia</div>
+        <button id="clear" class="text-btn">Limpar tudo</button>
+      </div>
+      <div id="word-grid" class="word-grid"></div>
+      <p class="hint"><kbd>↑</kbd><kbd>↓</kbd> navega • <kbd>Enter</kbd> seleciona • acentos são normalizados</p>
+
+      <div id="action-box" class="action-box hidden">
+        <div><strong>Entropia-base completa.</strong><span>Antes de continuar, confirme: este dispositivo está totalmente offline?</span></div>
+        <button id="analyze">Sugerir checksums →</button>
+      </div>
+    </section>
+
+    <section id="results" class="results hidden">
+      <div class="result-top">
+        <div><span class="section-tag">RESULTADO</span><h2>Palavras finais válidas</h2></div>
+        <div id="quality" class="quality"></div>
+      </div>
+      <p id="result-explainer"></p>
+      <div id="checksum-list" class="checksum-list"></div>
+      <div class="analysis-head"><div><span class="section-tag">DIAGNÓSTICO</span><h2>Análise de padrões</h2></div><span id="alert-count"></span></div>
+      <div id="alerts" class="alerts"></div>
+      <p class="disclaimer">Essa análise detecta padrões visíveis — ela não prova que a entropia foi gerada aleatoriamente. Uma frase “limpa” ainda pode ser insegura se veio de uma fonte previsível.</p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.bundle.js"></script>
+</body>
+</html>
