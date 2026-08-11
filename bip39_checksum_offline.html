@@ -57,6 +57,12 @@ h1{color:var(--accent);font-size:1.8rem;text-align:center;margin-bottom:4px}
 .entropy-fill{height:100%;border-radius:4px;transition:width .3s}
 .copied-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:8px 20px;border-radius:8px;font-weight:600;font-size:.9rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
 .copied-toast.show{opacity:1}
+.seed-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.seed-word{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-family:monospace;font-size:.85rem}
+.seed-word .sw-num{color:var(--text2);font-size:.7rem;margin-right:4px}
+.seed-word.checksum-slot{border-color:var(--accent);color:var(--accent)}
+.copy-all-btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 16px;font-size:.85rem;cursor:pointer;margin-top:10px;transition:all .15s}
+.copy-all-btn:hover{border-color:var(--accent);color:var(--accent)}
 @media(max-width:600px){.word-grid{grid-template-columns:1fr 1fr}.results-grid{grid-template-columns:1fr 1fr}h1{font-size:1.3rem}}
 </style>
 </head>
@@ -110,8 +116,13 @@ Use esta ferramenta apenas em um computador offline (air-gapped). Verifique: <b>
 <button class="calc-btn" id="calcBtn" disabled onclick="calculate()">Calcular Checksum</button>
 </div>
 
+<div class="section" id="seedListSection" style="display:none">
+<div class="section-title">Suas palavras (seed parcial)</div>
+<div id="seedList" class="seed-list"></div>
+</div>
+
 <div class="section" id="resultsSection" style="display:none">
-<div class="section-title" id="resultsTitle">Palavras finais v&aacute;lidas</div>
+<div class="section-title" id="resultsTitle">Checksums poss&iacute;veis</div>
 <div id="resultsGrid" class="results-grid"></div>
 </div>
 
@@ -187,8 +198,11 @@ function buildGrid() {
   bits = new Array(extraBits).fill(0);
   buildBits();
   document.getElementById('bitsSection').style.display = 'none';
+  document.getElementById('seedListSection').style.display = 'none';
   document.getElementById('resultsSection').style.display = 'none';
   document.getElementById('analysisSection').style.display = 'none';
+  const copyBtn = document.getElementById('copyAllBtn');
+  if (copyBtn) copyBtn.remove();
   checkReady();
 }
 
@@ -328,12 +342,23 @@ async function calculate() {
   // Sort by index
   results.sort((a,b) => a.idx - b.idx);
 
-  // Display
+  // Display seed list (entered words)
+  const seedListEl = document.getElementById('seedList');
+  let seedHtml = '';
+  for (let i = 0; i < wordCount; i++) {
+    const wIdx = words.indexOf(currentWords[i]);
+    seedHtml += '<span class="seed-word"><span class="sw-num">' + (i+1) + '.</span>' + currentWords[i] + '</span>';
+  }
+  seedHtml += '<span class="seed-word checksum-slot"><span class="sw-num">' + seedSize + '.</span>??? (checksum)</span>';
+  seedListEl.innerHTML = seedHtml;
+  document.getElementById('seedListSection').style.display = 'block';
+
+  // Display checksums
   const grid = document.getElementById('resultsGrid');
   grid.innerHTML = results.map(r =>
-    '<div class="result-word" onclick="copyWord(\''+r.word+'\')"><span class="rw-idx">#'+r.idx+'</span> <span class="rw-word">'+r.word+'</span></div>'
+    '<div class="result-word" onclick="selectChecksum(\''+r.word.replace(/'/g,"\\'")+'\','+r.idx+')"><span class="rw-idx">#'+(r.idx+1)+'</span> <span class="rw-word">'+r.word+'</span></div>'
   ).join('');
-  document.getElementById('resultsTitle').textContent = results.length + ' palavras finais v\u00e1lidas (palavra #' + seedSize + ')';
+  document.getElementById('resultsTitle').textContent = results.length + ' checksums poss\u00edveis (palavra #' + seedSize + ')';
   document.getElementById('resultsSection').style.display = 'block';
 
   // Pattern analysis
@@ -415,6 +440,37 @@ function analyzePatterns(results) {
   ).join('') +
   '<div style="margin-top:14px;color:var(--text2);font-size:.85rem">Pontua\u00e7\u00e3o de entropia: <b style="color:'+barColor+'">'+score+'/10</b> ('+uniqueWords+' palavras \u00fanicas de '+currentWords.length+')</div>' +
   '<div class="entropy-bar"><div class="entropy-fill" style="width:'+(score*10)+'%;background:'+barColor+'"></div></div>';
+}
+
+function selectChecksum(word, idx) {
+  // Update seed list: replace the ??? placeholder with chosen checksum
+  const seedListEl = document.getElementById('seedList');
+  const slots = seedListEl.querySelectorAll('.seed-word');
+  const last = slots[slots.length - 1];
+  last.innerHTML = '<span class="sw-num">' + seedSize + '.</span>' + word;
+  last.classList.add('checksum-slot');
+
+  // Highlight selected checksum in grid
+  document.querySelectorAll('.result-word').forEach(el => el.style.borderColor = '');
+  event.currentTarget.style.borderColor = 'var(--green)';
+
+  // Show copy button
+  const phrase = [...currentWords, word].join(' ');
+  let copyBtn = document.getElementById('copyAllBtn');
+  if (!copyBtn) {
+    copyBtn = document.createElement('button');
+    copyBtn.id = 'copyAllBtn';
+    copyBtn.className = 'copy-all-btn';
+    seedListEl.parentElement.appendChild(copyBtn);
+  }
+  copyBtn.textContent = 'Copiar seed completa (' + seedSize + ' palavras)';
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(phrase).catch(()=>{});
+    const t = document.getElementById('toast');
+    t.textContent = 'Seed copiada!';
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1500);
+  };
 }
 
 function copyWord(w) {

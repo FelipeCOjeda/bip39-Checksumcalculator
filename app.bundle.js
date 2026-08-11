@@ -20768,12 +20768,34 @@ zvyk`.split("\n"));
         $("#quality").className = `quality ${q[0]}`;
         $("#quality").textContent = q[1];
         $("#result-explainer").textContent = size === 12 ? "Existem 128 combina\xE7\xF5es v\xE1lidas para a 12\xAA palavra (7 bits de entropia + 4 de checksum)." : "Existem 8 combina\xE7\xF5es v\xE1lidas para a 24\xAA palavra (3 bits de entropia + 8 de checksum).";
+        // Display seed words
+        const seedEl = document.getElementById("seed-display");
+        if (seedEl) {
+          seedEl.innerHTML = "";
+          words.forEach((w, i) => {
+            const t = document.createElement("span");
+            t.className = "seed-word-tag";
+            t.innerHTML = '<span class="sw-num">' + (i+1) + '.</span>' + w;
+            seedEl.append(t);
+          });
+          const csSlot = document.createElement("span");
+          csSlot.className = "seed-word-tag cs-slot";
+          csSlot.id = "cs-slot";
+          csSlot.innerHTML = '<span class="sw-num">' + size + '.</span>??? (checksum)';
+          seedEl.append(csSlot);
+        }
         $("#checksum-list").innerHTML = "";
         finals.forEach((x) => {
           const b = document.createElement("button");
           b.className = "checksum-word";
           b.innerHTML = `<span>${x.word}</span><b>#${x.index}</b>`;
-          b.onclick = () => copyPhrase(x.word);
+          b.onclick = () => {
+            const slot = document.getElementById("cs-slot");
+            if (slot) { slot.innerHTML = '<span class="sw-num">' + size + '.</span>' + x.word; }
+            document.querySelectorAll(".checksum-word").forEach(el => el.style.borderColor = "");
+            b.style.borderColor = "var(--green)";
+            copyPhrase(x.word);
+          };
           $("#checksum-list").append(b);
         });
         $("#alert-count").textContent = `${alerts.length} alerta${alerts.length !== 1 ? "s" : ""}`;
